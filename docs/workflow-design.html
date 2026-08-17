@@ -1,0 +1,588 @@
+<title>商談結果報告フロー</title>
+<style>
+  :root {
+    --bg: #FAF7F1;
+    --surface: #FFFFFF;
+    --surface-muted: #F3EFE6;
+    --ink: #20262B;
+    --ink-muted: #5E6670;
+    --ink-faint: #8B9198;
+    --accent: #2F6F5E;
+    --accent-soft: #DCEEE8;
+    --accent-ink: #1D4E41;
+    --warn: #B8752B;
+    --warn-soft: #F5E7D3;
+    --line: #DAD3C4;
+    --line-soft: #E9E4D8;
+    --font-body: "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Yu Gothic UI", "Noto Sans JP", "Segoe UI", sans-serif;
+    --font-mono: ui-monospace, "SF Mono", "Cascadia Code", "Consolas", monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #12181A;
+      --surface: #1A2124;
+      --surface-muted: #1F272A;
+      --ink: #EDEAE2;
+      --ink-muted: #A7AEB4;
+      --ink-faint: #767E85;
+      --accent: #74C4AC;
+      --accent-soft: #1F3833;
+      --accent-ink: #BFE9D9;
+      --warn: #E4A75C;
+      --warn-soft: #3A2E1C;
+      --line: #2B3438;
+      --line-soft: #212A2D;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --bg: #12181A;
+    --surface: #1A2124;
+    --surface-muted: #1F272A;
+    --ink: #EDEAE2;
+    --ink-muted: #A7AEB4;
+    --ink-faint: #767E85;
+    --accent: #74C4AC;
+    --accent-soft: #1F3833;
+    --accent-ink: #BFE9D9;
+    --warn: #E4A75C;
+    --warn-soft: #3A2E1C;
+    --line: #2B3438;
+    --line-soft: #212A2D;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-body);
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .page {
+    max-width: 780px;
+    margin: 0 auto;
+    padding: 56px 24px 96px;
+  }
+
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent-ink);
+    background: var(--accent-soft);
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 3px;
+  }
+
+  h1 {
+    font-size: 30px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    margin: 18px 0 8px;
+    text-wrap: balance;
+  }
+
+  .lede {
+    color: var(--ink-muted);
+    font-size: 16px;
+    max-width: 62ch;
+    margin: 0 0 6px;
+  }
+
+  .meta {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--ink-faint);
+    margin-top: 4px;
+  }
+
+  h2 {
+    font-size: 20px;
+    font-weight: 700;
+    margin: 0 0 4px;
+    letter-spacing: -0.005em;
+  }
+
+  h3 {
+    font-size: 15px;
+    font-weight: 700;
+    margin: 0 0 10px;
+    color: var(--ink);
+  }
+
+  section {
+    margin-top: 56px;
+  }
+
+  .section-head {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    margin-bottom: 18px;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 10px;
+  }
+
+  .section-num {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--ink-faint);
+  }
+
+  p { margin: 10px 0; }
+  .lede-block { color: var(--ink-muted); font-size: 15px; }
+
+  figure {
+    margin: 0;
+    padding: 20px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+  }
+
+  figure svg { display: block; width: 100%; height: auto; }
+
+  figcaption {
+    font-size: 13px;
+    color: var(--ink-muted);
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid var(--line-soft);
+  }
+
+  .diagram-legend {
+    display: flex;
+    gap: 18px;
+    flex-wrap: wrap;
+    font-size: 12px;
+    color: var(--ink-muted);
+    margin-top: 10px;
+  }
+  .diagram-legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .swatch { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+
+  .raci {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+  .raci th, .raci td {
+    text-align: left;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .raci th {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    font-weight: 600;
+  }
+  .raci td.who { color: var(--accent-ink); font-weight: 600; white-space: nowrap; }
+  .raci td.note { color: var(--ink-muted); }
+
+  .schema-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  .schema-card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 18px 20px;
+    overflow-x: auto;
+  }
+  .schema-card .tag {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--ink-faint);
+    margin-bottom: 6px;
+    display: block;
+  }
+  .cols {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 8px;
+    margin-top: 8px;
+  }
+  .col-token {
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    background: var(--surface-muted);
+    border: 1px solid var(--line-soft);
+    border-radius: 4px;
+    padding: 3px 8px;
+    color: var(--ink);
+    white-space: nowrap;
+  }
+  .col-token.new {
+    background: var(--accent-soft);
+    border-color: var(--accent);
+    color: var(--accent-ink);
+  }
+
+  ol.steps {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    counter-reset: step;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  ol.steps li {
+    counter-increment: step;
+    display: grid;
+    grid-template-columns: 32px 1fr;
+    gap: 14px;
+    padding: 14px 16px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+  }
+  ol.steps li::before {
+    content: counter(step);
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--accent-ink);
+    background: var(--accent-soft);
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  ol.steps li .step-title { font-weight: 600; margin-bottom: 4px; }
+  ol.steps li .step-body { color: var(--ink-muted); font-size: 14px; }
+  ol.steps li .step-body code { font-family: var(--font-mono); font-size: 12.5px; background: var(--surface-muted); padding: 1px 5px; border-radius: 3px; }
+
+  .checklist { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+  .checklist li { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; }
+  .checklist li::before {
+    content: "";
+    width: 15px; height: 15px; margin-top: 3px; flex: none;
+    border: 1.5px solid var(--ink-faint);
+    border-radius: 4px;
+  }
+
+  .callout {
+    background: var(--warn-soft);
+    border: 1px solid color-mix(in srgb, var(--warn) 45%, transparent);
+    border-radius: 10px;
+    padding: 18px 20px;
+  }
+  .callout h3 { color: var(--warn); }
+  .callout ul { margin: 6px 0 0; padding-left: 20px; color: var(--ink); }
+  .callout li { margin: 6px 0; }
+
+  footer {
+    margin-top: 64px;
+    padding-top: 20px;
+    border-top: 1px solid var(--line);
+    font-size: 12.5px;
+    color: var(--ink-faint);
+  }
+
+  @media (max-width: 640px) {
+    .page { padding: 40px 16px 72px; }
+    h1 { font-size: 25px; }
+  }
+</style>
+
+<div class="page">
+
+  <span class="eyebrow">Process Design</span>
+  <h1>商談結果報告フロー</h1>
+  <p class="lede">商談実施後の「案件化 / 検討中 / 失注」の振り分けと、各シートへの転記を自動化する設計。</p>
+  <p class="meta">最終更新 2026-08-17 &nbsp;·&nbsp; 掲載データはすべてダミー</p>
+
+  <section>
+    <div class="section-head">
+      <span class="section-num">01</span>
+      <h2>全体フロー</h2>
+    </div>
+    <p class="lede-block">既存の「カレンダー登録 → 初回商談一覧」はそのまま使い、商談終了を検知した後の結果報告と転記だけを新たに自動化する。</p>
+
+    <figure>
+      <svg viewBox="0 0 1000 500" role="img" aria-label="商談獲得からカレンダー登録、初回商談一覧までの既存フローに続き、GASが商談終了を検知してSlack通知を送り、営業担当がSlackワークフローで案件化・検討中・失注のいずれかを回答すると、それぞれ案件リスト・案件化中商談一覧・失注リストへ自動転記され、最後に初回商談一覧の更新とSlackスレッドへの完了報告が行われる図">
+        <defs>
+          <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="currentColor" />
+          </marker>
+          <marker id="arrowAccent" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="var(--accent)" />
+          </marker>
+        </defs>
+
+        <!-- existing pipeline (muted) -->
+        <g style="color:var(--ink-faint)">
+          <rect x="30" y="28" width="150" height="48" rx="8" fill="none" stroke="currentColor" stroke-dasharray="3 3"/>
+          <text x="105" y="57" text-anchor="middle" font-size="13" fill="currentColor">商談獲得</text>
+
+          <rect x="215" y="28" width="170" height="48" rx="8" fill="none" stroke="currentColor" stroke-dasharray="3 3"/>
+          <text x="300" y="52" text-anchor="middle" font-size="13" fill="currentColor">カレンダー登録</text>
+          <text x="300" y="67" text-anchor="middle" font-size="11" fill="currentColor">(命名ルールあり・既存)</text>
+
+          <rect x="420" y="28" width="170" height="48" rx="8" fill="none" stroke="currentColor" stroke-dasharray="3 3"/>
+          <text x="505" y="52" text-anchor="middle" font-size="13" fill="currentColor">初回商談一覧</text>
+          <text x="505" y="67" text-anchor="middle" font-size="11" fill="currentColor">(自動抽出・既存)</text>
+
+          <line x1="180" y1="52" x2="212" y2="52" stroke="currentColor" marker-end="url(#arrow)"/>
+          <line x1="385" y1="52" x2="417" y2="52" stroke="currentColor" marker-end="url(#arrow)"/>
+        </g>
+
+        <!-- boundary -->
+        <line x1="10" y1="100" x2="990" y2="100" stroke="var(--line)" stroke-width="1.5" stroke-dasharray="5 5"/>
+        <text x="500" y="96" text-anchor="middle" font-size="11" fill="var(--ink-faint)" font-family="ui-monospace, monospace">ここから新規自動化</text>
+
+        <!-- new automation row -->
+        <g style="color:var(--ink)">
+          <rect x="30" y="128" width="190" height="54" rx="8" fill="var(--surface)" stroke="currentColor"/>
+          <text x="125" y="151" text-anchor="middle" font-size="13" fill="currentColor">商談終了検知</text>
+          <text x="125" y="167" text-anchor="middle" font-size="11" fill="var(--ink-muted)">GAS・15分毎</text>
+
+          <rect x="250" y="128" width="190" height="54" rx="8" fill="var(--surface)" stroke="currentColor"/>
+          <text x="345" y="151" text-anchor="middle" font-size="13" fill="currentColor">Slack通知</text>
+          <text x="345" y="167" text-anchor="middle" font-size="11" fill="var(--ink-muted)">結果報告ボタン付き</text>
+
+          <rect x="470" y="128" width="220" height="54" rx="8" fill="var(--surface)" stroke="currentColor"/>
+          <text x="580" y="151" text-anchor="middle" font-size="13" fill="currentColor">Slackワークフロー回答</text>
+          <text x="580" y="167" text-anchor="middle" font-size="11" fill="var(--ink-muted)">案件化ステータスを選択</text>
+
+          <line x1="505" y1="76" x2="125" y2="126" stroke="currentColor" stroke-dasharray="3 3" marker-end="url(#arrow)"/>
+          <line x1="220" y1="155" x2="247" y2="155" stroke="currentColor" marker-end="url(#arrow)"/>
+          <line x1="440" y1="155" x2="467" y2="155" stroke="currentColor" marker-end="url(#arrow)"/>
+        </g>
+
+        <!-- fork -->
+        <path d="M580,182 L580,205 L170,205 L170,228" fill="none" stroke="var(--accent)" stroke-width="1.5" marker-end="url(#arrowAccent)"/>
+        <path d="M580,182 L580,228" fill="none" stroke="var(--accent)" stroke-width="1.5" marker-end="url(#arrowAccent)"/>
+        <path d="M580,182 L580,205 L830,205 L830,228" fill="none" stroke="var(--accent)" stroke-width="1.5" marker-end="url(#arrowAccent)"/>
+
+        <g font-size="13" font-weight="600">
+          <rect x="60" y="230" width="220" height="48" rx="8" fill="var(--accent-soft)" stroke="var(--accent)"/>
+          <text x="170" y="259" text-anchor="middle" fill="var(--accent-ink)">案件化した</text>
+
+          <rect x="470" y="230" width="220" height="48" rx="8" fill="var(--accent-soft)" stroke="var(--accent)"/>
+          <text x="580" y="259" text-anchor="middle" fill="var(--accent-ink)">進行中（未失注）</text>
+
+          <rect x="720" y="230" width="220" height="48" rx="8" fill="var(--accent-soft)" stroke="var(--accent)"/>
+          <text x="830" y="259" text-anchor="middle" fill="var(--accent-ink)">失注した</text>
+        </g>
+
+        <!-- writes -->
+        <g style="color:var(--ink)">
+          <line x1="170" y1="278" x2="170" y2="308" stroke="currentColor" marker-end="url(#arrow)"/>
+          <line x1="580" y1="278" x2="580" y2="308" stroke="currentColor" marker-end="url(#arrow)"/>
+          <line x1="830" y1="278" x2="830" y2="308" stroke="currentColor" marker-end="url(#arrow)"/>
+
+          <rect x="60" y="310" width="220" height="50" rx="8" fill="var(--surface)" stroke="currentColor"/>
+          <text x="170" y="331" text-anchor="middle" font-size="12.5">案件リストへ</text>
+          <text x="170" y="347" text-anchor="middle" font-size="12.5">1行追記</text>
+
+          <rect x="470" y="310" width="220" height="50" rx="8" fill="var(--surface)" stroke="currentColor"/>
+          <text x="580" y="331" text-anchor="middle" font-size="12.5">案件化中商談一覧へ</text>
+          <text x="580" y="347" text-anchor="middle" font-size="12.5">1行追記</text>
+
+          <rect x="720" y="310" width="220" height="50" rx="8" fill="var(--surface)" stroke="currentColor"/>
+          <text x="830" y="331" text-anchor="middle" font-size="12.5">失注リストへ</text>
+          <text x="830" y="347" text-anchor="middle" font-size="12.5">1行追記</text>
+        </g>
+
+        <!-- converge -->
+        <path d="M170,360 L170,410 L500,410" fill="none" stroke="var(--ink-muted)" marker-end="url(#arrow)"/>
+        <path d="M580,360 L580,410" fill="none" stroke="var(--ink-muted)" marker-end="url(#arrow)"/>
+        <path d="M830,360 L830,410 L660,410" fill="none" stroke="var(--ink-muted)" marker-end="url(#arrow)"/>
+
+        <rect x="440" y="412" width="280" height="58" rx="8" fill="var(--surface)" stroke="var(--ink)"/>
+        <text x="580" y="435" text-anchor="middle" font-size="12.5" fill="var(--ink)">初回商談一覧を更新</text>
+        <text x="580" y="452" text-anchor="middle" font-size="12.5" fill="var(--ink)">＋ Slackスレッドへ完了報告</text>
+      </svg>
+
+      <figcaption>点線＝既存の自動化（変更なし）。実線＝新規に追加するGAS処理。緑＝営業担当の回答による3方向分岐。</figcaption>
+    </figure>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <span class="section-num">02</span>
+      <h2>役割分担</h2>
+    </div>
+    <table class="raci">
+      <thead>
+        <tr><th>工程</th><th>実施者</th><th>備考</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>商談獲得・カレンダー登録</td><td class="who">営業担当</td><td class="note">既存ルールのまま変更なし</td></tr>
+        <tr><td>初回商談一覧への反映</td><td class="who">GAS（既存）</td><td class="note">変更なし</td></tr>
+        <tr><td>商談終了検知・Slack通知</td><td class="who">GAS（新規）</td><td class="note">時間主導トリガー・15分毎</td></tr>
+        <tr><td>ワークフロー回答</td><td class="who">営業担当</td><td class="note">Slack上で完結、フォーム入力のみ</td></tr>
+        <tr><td>各シートへの転記</td><td class="who">GAS（新規）</td><td class="note">手入力の転記をゼロ化</td></tr>
+        <tr><td>案件化後の進捗管理</td><td class="who">営業担当／マネージャー</td><td class="note">従来通り案件リストを運用</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <span class="section-num">03</span>
+      <h2>シート設計</h2>
+    </div>
+    <div class="schema-grid">
+
+      <div class="schema-card">
+        <span class="tag">KPI管理シート・既存シートに列追加</span>
+        <h3>初回商談一覧</h3>
+        <div class="cols">
+          <span class="col-token">企業名取得</span>
+          <span class="col-token">企業担当者名取得</span>
+          <span class="col-token">商談実施日</span>
+          <span class="col-token">参加者①②③</span>
+          <span class="col-token new">カレンダーID(紐付け用)</span>
+          <span class="col-token new">通知済みフラグ</span>
+          <span class="col-token new">Slackメッセージts</span>
+          <span class="col-token">案件化有無</span>
+          <span class="col-token new">回答日時</span>
+        </div>
+      </div>
+
+      <div class="schema-card">
+        <span class="tag">案件管理シート・新規シート</span>
+        <h3>案件化中商談一覧</h3>
+        <div class="cols">
+          <span class="col-token new">案件登録日(仮)</span>
+          <span class="col-token new">獲得経路</span>
+          <span class="col-token new">クライアント名</span>
+          <span class="col-token new">先方担当者</span>
+          <span class="col-token new">案件名(仮)</span>
+          <span class="col-token new">初回商談日</span>
+          <span class="col-token new">営業担当</span>
+          <span class="col-token new">ステータス(検討中固定)</span>
+          <span class="col-token new">ネクストアクション日</span>
+          <span class="col-token new">ネクストアクション</span>
+          <span class="col-token new">次回商談日</span>
+          <span class="col-token new">案件化見込み度</span>
+          <span class="col-token new">元カレンダーID(紐付け用)</span>
+        </div>
+      </div>
+
+      <div class="schema-card">
+        <span class="tag">案件管理シート・新規シート</span>
+        <h3>失注リスト</h3>
+        <div class="cols">
+          <span class="col-token new">記録日</span>
+          <span class="col-token new">商談実施日</span>
+          <span class="col-token new">クライアント名</span>
+          <span class="col-token new">先方担当者</span>
+          <span class="col-token new">営業担当</span>
+          <span class="col-token new">失注区分(未案件化/案件化後失注)</span>
+          <span class="col-token new">失注理由</span>
+          <span class="col-token new">失注理由（詳細）</span>
+          <span class="col-token new">元カレンダーID(紐付け用)</span>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <span class="section-num">04</span>
+      <h2>Slackワークフロー設定手順</h2>
+    </div>
+    <p class="lede-block">Slack Workflow Builder 側は手動設定。GASからは自動生成できない。</p>
+    <ol class="steps">
+      <li>
+        <div class="step-title">ワークフロー作成</div>
+        <div class="step-body">「商談結果報告」という名前で新規作成する。</div>
+      </li>
+      <li>
+        <div class="step-title">リンクトリガーを設定</div>
+        <div class="step-body">入力変数 <code>calendar_id</code> <code>company_name</code> <code>contact_name</code> <code>sales_rep</code> を定義。GASが投稿するSlackメッセージのボタンURLにクエリパラメータとして埋め込み、営業担当の再入力を減らす。</div>
+      </li>
+      <li>
+        <div class="step-title">フォームステップ①を追加</div>
+        <div class="step-body">「案件化ステータス」を単一選択にする：<code>案件化した</code> / <code>進行中（未失注）</code> / <code>失注した</code>。</div>
+      </li>
+      <li>
+        <div class="step-title">If/Then で3方向に分岐</div>
+        <div class="step-body">案件化した→案件名・想定金額・対象業務領域・次回商談日。進行中→ネクストアクション・ネクストアクション日・案件化見込み度。失注した→失注区分・失注理由（マスター参照）・詳細メモ。</div>
+      </li>
+      <li>
+        <div class="step-title">最終ステップに「Webリクエストを送信」を追加</div>
+        <div class="step-body">GAS Web App の <code>/exec</code> URLへPOST。認証用の共有シークレットはヘッダーではなくJSONボディに含める（GAS側でカスタムヘッダーが読めないため）。</div>
+      </li>
+    </ol>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <span class="section-num">05</span>
+      <h2>導入チェックリスト</h2>
+    </div>
+    <ul class="checklist">
+      <li>初回商談一覧に紐付け用の4列を追加する</li>
+      <li>案件化中商談一覧・失注リストを新規作成する</li>
+      <li>Slack Botを作成し chat:write スコープを付与、対象チャンネルに招待する</li>
+      <li>Slack Workflow Builderで「商談結果報告」を設定する</li>
+      <li>gas/ 配下のコードをApps Scriptプロジェクトへ配置し、スクリプトプロパティを設定する</li>
+      <li>Web Appとしてデプロイし、Slackワークフローに /exec URLを設定する</li>
+      <li>notifyCompletedFirstMeetings に時間主導トリガーを設定する</li>
+      <li>ダミーデータでテストする（実企業名は使わない）</li>
+    </ul>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <span class="section-num">06</span>
+      <h2>スケジュール（8月末までの進め方）</h2>
+    </div>
+    <p class="lede-block">2〜3時間／日の稼働を想定した想定進行。承認待ちが発生しうる「①既存スクリプト調査」「④Slack Bot作成申請」を最優先で着手する。</p>
+    <table class="raci">
+      <thead>
+        <tr><th>日程</th><th>内容</th><th>目安時間</th></tr>
+      </thead>
+      <tbody>
+        <tr><td class="who">8/18(火)</td><td>①既存スクリプト調査＋④Slack Bot作成申請</td><td class="note">2〜3h</td></tr>
+        <tr><td class="who">8/19(水)</td><td>②初回商談一覧に列追加／新規シート2枚作成</td><td class="note">1〜2h</td></tr>
+        <tr><td class="who">8/20(木)</td><td>③カレンダーID列を既存処理へ組み込み</td><td class="note">1〜2h</td></tr>
+        <tr><td class="who">8/21(金)</td><td>⑤Slack Workflow Builder設定 開始</td><td class="note">2〜3h</td></tr>
+        <tr><td class="who">8/22-23(土日)</td><td>予備（⑤が押した場合の吸収）</td><td class="note">—</td></tr>
+        <tr><td class="who">8/24(月)</td><td>⑤完了（3分岐＋Webリクエストステップ）</td><td class="note">2h</td></tr>
+        <tr><td class="who">8/25(火)</td><td>⑥GASデプロイ・スクリプトプロパティ設定＋⑦トリガー設定</td><td class="note">1.5〜2h</td></tr>
+        <tr><td class="who">8/26(水)</td><td>⑧E2Eテスト（案件化ルート）</td><td class="note">2h</td></tr>
+        <tr><td class="who">8/27(木)</td><td>⑧E2Eテスト（検討中・失注ルート）＋デバッグ</td><td class="note">2〜3h</td></tr>
+        <tr><td class="who">8/28(金)</td><td>不具合修正・再テスト</td><td class="note">2h</td></tr>
+        <tr><td class="who">8/29-30(土日)</td><td>バッファ（テスト漏れ・想定外の不具合対応）</td><td class="note">—</td></tr>
+        <tr><td class="who">8/31(月)</td><td>⑨チーム共有・運用開始案内</td><td class="note">0.5〜1h</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <div class="callout">
+      <h3>未確定・要相談</h3>
+      <ul>
+        <li>初回商談一覧への企業名等の自動転記ロジックの所在が未確認。カレンダーID列の追加を既存スクリプトに組み込むか、別トリガーにするかは実装時に確認する。</li>
+        <li>Slack Botのワークスペース導入権限、通知先チャンネルの確定。</li>
+        <li>失注理由の選択肢（マスターシート記載分）をSlackワークフロー側へ転記する作業は手動。</li>
+      </ul>
+    </div>
+  </section>
+
+  <footer>
+    詳細設計・GASコードは AIBPO/docs/workflow-design.md および AIBPO/gas/ を参照。掲載の企業名・数値はすべてダミー。
+  </footer>
+
+</div>
