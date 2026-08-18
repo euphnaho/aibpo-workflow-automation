@@ -275,6 +275,15 @@
     border: 1.5px solid var(--ink-faint);
     border-radius: 4px;
   }
+  .milestone-num {
+    font-family: var(--font-mono);
+    font-weight: 700;
+    color: var(--accent-ink);
+    background: var(--accent-soft);
+    border-radius: 4px;
+    padding: 1px 6px;
+    margin-right: 8px;
+  }
 
   .callout {
     background: var(--warn-soft);
@@ -529,17 +538,19 @@
   <section>
     <div class="section-head">
       <span class="section-num">05</span>
-      <h2>導入チェックリスト</h2>
+      <h2>導入マイルストーン（①〜⑨）</h2>
     </div>
+    <p class="lede-block">番号は次の「06 スケジュール」の日程表と共通。</p>
     <ul class="checklist">
-      <li>初回商談一覧に紐付け用の4列を追加する</li>
-      <li>案件化中商談一覧・失注リストを新規作成する</li>
-      <li>Slack Botを作成し chat:write スコープを付与、対象チャンネルに招待する</li>
-      <li>Slack Workflow Builderで「商談結果報告」を設定する</li>
-      <li>gas/ 配下のコードをApps Scriptプロジェクトへ配置し、スクリプトプロパティを設定する</li>
-      <li>Web Appとしてデプロイし、Slackワークフローに /exec URLを設定する</li>
-      <li>notifyCompletedFirstMeetings に時間主導トリガーを設定する</li>
-      <li>ダミーデータでテストする（実企業名は使わない）</li>
+      <li><span class="checklist-text"><span class="milestone-num">①</span>既存の「初回商談一覧」生成スクリプトを調査する</span></li>
+      <li><span class="checklist-text"><span class="milestone-num">②</span>初回商談一覧に紐付け用の4列を追加し、案件化中商談一覧・失注リストを新規作成する</span></li>
+      <li><span class="checklist-text"><span class="milestone-num">③</span>①の調査結果をふまえ、カレンダーID列を既存処理に組み込む</span></li>
+      <li><span class="checklist-text"><span class="milestone-num">④</span>Slack Botを作成し chat:write スコープを付与、対象チャンネルに招待する</span></li>
+      <li><span class="checklist-text"><span class="milestone-num">⑤</span>Slack Workflow Builderで「商談結果報告」を設定する</span></li>
+      <li><span class="checklist-text"><span class="milestone-num">⑥</span>gas/ 配下のコードをApps Scriptプロジェクトへ配置・スクリプトプロパティ設定・Web Appデプロイする</span></li>
+      <li><span class="checklist-text"><span class="milestone-num">⑦</span>notifyCompletedFirstMeetings に時間主導トリガーを設定する</span></li>
+      <li><span class="checklist-text"><span class="milestone-num">⑧</span>ダミーデータでE2Eテストする（実企業名は使わない）</span></li>
+      <li><span class="checklist-text"><span class="milestone-num">⑨</span>チームへ共有・運用開始を案内する</span></li>
     </ul>
   </section>
 

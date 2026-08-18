@@ -5,16 +5,19 @@
 - 設計の全体像・フロー図・シート設計: [docs/workflow-design.md](docs/workflow-design.md)
 - GAS 実装: [gas/](gas/)
 
-## 導入チェックリスト
+## 導入チェックリスト（マイルストーン①〜⑨）
 
-- [ ] `初回商談一覧` シートに紐付け用列を追加（`カレンダーID(紐付け用)` / `通知済みフラグ` / `Slackメッセージts` / `回答日時`）
-- [ ] 案件管理シートに `案件化中商談一覧` / `失注リスト` シートを新規作成（列は docs/workflow-design.md §4.2, 4.3 参照）
-- [ ] Slack Bot を作成し `chat:write` スコープを付与、対象チャンネルに招待
-- [ ] Slack Workflow Builder で「商談結果報告」ワークフローを作成（docs/workflow-design.md §5 の手順）
-- [ ] `gas/` の各ファイルを Apps Script プロジェクトにコピーし、スクリプトプロパティを設定
-- [ ] Web App としてデプロイし、`/exec` URL を Slack ワークフローの Web リクエストステップに設定
-- [ ] `notifyCompletedFirstMeetings` に時間主導トリガー（15分おき目安）を設定
-- [ ] ダミーデータでテスト実施（実企業名は使わない）
+番号は [docs/workflow-design.md](docs/workflow-design.md) §8 のスケジュール表と対応。
+
+- [ ] ①既存の `初回商談一覧` 生成スクリプトを調査する
+- [ ] ②`初回商談一覧` シートに紐付け用列を追加（`カレンダーID(紐付け用)` / `通知済みフラグ` / `Slackメッセージts` / `回答日時`）し、案件管理シートに `案件化中商談一覧` / `失注リスト` シートを新規作成（列は docs/workflow-design.md §4.2, 4.3 参照）
+- [ ] ③①の調査結果をふまえ、カレンダーID列を既存処理に組み込む
+- [ ] ④Slack Bot を作成し `chat:write` スコープを付与、対象チャンネルに招待
+- [ ] ⑤Slack Workflow Builder で「商談結果報告」ワークフローを作成（docs/workflow-design.md §5 の手順）
+- [ ] ⑥`gas/` の各ファイルを Apps Script プロジェクトにコピーし、スクリプトプロパティを設定、Web App としてデプロイして `/exec` URL を Slack ワークフローの Web リクエストステップに設定
+- [ ] ⑦`notifyCompletedFirstMeetings` に時間主導トリガー（15分おき目安）を設定
+- [ ] ⑧ダミーデータでテスト実施（実企業名は使わない）
+- [ ] ⑨チームへ共有・運用開始を案内
 
 ## 注意事項
 
