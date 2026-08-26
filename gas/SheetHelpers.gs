@@ -63,3 +63,15 @@ function updateRowByHeaderNames_(sheet, rowNumber, rowObj) {
     if (col) sheet.getRange(rowNumber, col).setValue(rowObj[key]);
   });
 }
+
+/**
+ * keyHeaderName の値が keyValue の行があれば更新、無ければ新規追加する。
+ */
+function upsertRowByHeaderNames_(sheet, keyHeaderName, keyValue, rowObj) {
+  var rowNumber = findRowByColumnValue_(sheet, keyHeaderName, keyValue);
+  if (rowNumber === -1) {
+    appendRowByHeaderNames_(sheet, rowObj);
+  } else {
+    updateRowByHeaderNames_(sheet, rowNumber, rowObj);
+  }
+}

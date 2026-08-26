@@ -1,18 +1,20 @@
 /**
  * Slack Workflow Builder の「Webリクエストを送信」ステップから呼ばれる Web App エントリポイント。
+ * 想定オペレーション ステップ4〜6（案件化可否の回収〜各シートへの反映）に対応する。
  *
  * 期待するリクエストボディ(JSON)の例:
  * {
  *   "secret": "共有シークレット",
  *   "calendar_id": "初回商談一覧のカレンダーID(紐付け用)",
- *   "company_name": "...", "contact_name": "...", "sales_rep": "...",
+ *   "company_name": "...",   // Slackフォームに事前入力されるが、営業担当が編集可能。送信された値を正とする
+ *   "contact_name": "...", "sales_rep": "...", "meeting_time": "...",
  *   "status": "案件化した" | "進行中（未失注）" | "失注した",
  *
  *   // status === "案件化した" の場合に使用
  *   "deal_name": "...", "expected_amount": "...", "target_area": "...", "next_meeting_date": "...",
  *
- *   // status === "進行中（未失注）" の場合に使用
- *   "next_action": "...", "next_action_date": "...", "probability": "...",
+ *   // status === "進行中（未失注）" の場合に使用（NA日は再通知ループの起点として必須）
+ *   "next_action": "...", "na_date": "...", "probability": "...",
  *
  *   // status === "失注した" の場合に使用
  *   "lost_type": "未案件化" | "案件化後失注", "lost_reason": "...", "lost_reason_detail": "..."
@@ -23,7 +25,7 @@
  */
 
 var DEAL_LIST_SHEET_NAME = '案件リスト';
-var IN_PROGRESS_SHEET_NAME = '案件化中商談一覧';
+var FOLLOW_UP_SHEET_NAME = '追いかけ中商談リスト';
 var LOST_LIST_SHEET_NAME = '失注リスト';
 
 function doPost(e) {
@@ -52,22 +54,27 @@ function doPost(e) {
         '次回商談日': payload.next_meeting_date,
         'ステータス': '11.商談前'
       });
+      closeFollowUpIfExists_(dealSs, payload.calendar_id, '案件化済み(卒業)');
       resultLabel = '案件化';
+
     } else if (payload.status === '進行中（未失注）') {
-      appendRowByHeaderNames_(dealSs.getSheetByName(IN_PROGRESS_SHEET_NAME), {
-        '案件登録日(仮)': today,
+      if (!payload.na_date) {
+        return jsonResponse_({ ok: false, error: 'na_date is required for 進行中（未失注）' });
+      }
+      var followUpSheet = dealSs.getSheetByName(FOLLOW_UP_SHEET_NAME);
+      upsertRowByHeaderNames_(followUpSheet, '元カレンダーID(紐付け用)', payload.calendar_id, {
+        '元カレンダーID(紐付け用)': payload.calendar_id,
         'クライアント名': payload.company_name,
         '先方担当者': payload.contact_name,
-        '初回商談日': payload.meeting_time || today,
         '営業担当': payload.sales_rep,
+        '初回商談日': payload.meeting_time || today,
         'ステータス': '検討中',
-        'ネクストアクション日': payload.next_action_date,
+        'NA日': payload.na_date,
         'ネクストアクション': payload.next_action,
-        '次回商談日': payload.next_meeting_date,
-        '案件化見込み度': payload.probability,
-        '元カレンダーID(紐付け用)': payload.calendar_id
+        '案件化見込み度': payload.probability
       });
       resultLabel = '検討中';
+
     } else if (payload.status === '失注した') {
       appendRowByHeaderNames_(dealSs.getSheetByName(LOST_LIST_SHEET_NAME), {
         '記録日': today,
@@ -80,12 +87,16 @@ function doPost(e) {
         '失注理由（詳細）': payload.lost_reason_detail,
         '元カレンダーID(紐付け用)': payload.calendar_id
       });
+      closeFollowUpIfExists_(dealSs, payload.calendar_id, '失注(クローズ)');
       resultLabel = '失注';
+
     } else {
       return jsonResponse_({ ok: false, error: 'unknown status: ' + payload.status });
     }
 
-    updateFirstMeetingRow_(payload.calendar_id, resultLabel);
+    // 商談DB（初回商談一覧）と案件管理シート側の企業名・担当者名を、
+    // 営業担当がSlackフォームで確定させた値に統一する。
+    updateFirstMeetingRow_(payload.calendar_id, resultLabel, payload.company_name, payload.contact_name);
     notifySlackThread_(config, payload, resultLabel);
 
     return jsonResponse_({ ok: true, result: resultLabel });
@@ -94,14 +105,31 @@ function doPost(e) {
   }
 }
 
-function updateFirstMeetingRow_(calendarId, resultLabel) {
+/**
+ * 案件化・失注により追いかけループが終わった場合、追いかけ中商談リストの行を
+ * 削除はせず、ステータスを更新してNA日を消すことで再通知の対象から外す。
+ */
+function closeFollowUpIfExists_(dealSs, calendarId, closedStatusLabel) {
+  var sheet = dealSs.getSheetByName(FOLLOW_UP_SHEET_NAME);
+  var rowNumber = findRowByColumnValue_(sheet, '元カレンダーID(紐付け用)', calendarId);
+  if (rowNumber === -1) return;
+
+  updateRowByHeaderNames_(sheet, rowNumber, {
+    'ステータス': closedStatusLabel,
+    'NA日': ''
+  });
+}
+
+function updateFirstMeetingRow_(calendarId, resultLabel, confirmedCompanyName, confirmedContactName) {
   var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(FIRST_MEETING_SHEET_NAME);
   var rowNumber = findRowByColumnValue_(sheet, 'カレンダーID(紐付け用)', calendarId);
   if (rowNumber === -1) return; // 紐付け先が見つからない場合はスキップ（ログ確認用に doPost の戻り値で分かる）
 
   updateRowByHeaderNames_(sheet, rowNumber, {
     '案件化有無': resultLabel,
-    '回答日時': new Date()
+    '回答日時': new Date(),
+    '企業名(確定)': confirmedCompanyName,
+    '担当者名(確定)': confirmedContactName
   });
 }
 

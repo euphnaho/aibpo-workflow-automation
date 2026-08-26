@@ -8,6 +8,9 @@
  *   DEAL_SHEET_ID          案件管理シート（案件リスト/案件化中商談一覧/失注リストが入っている方）のID
  *   SHARED_SECRET          Slackワークフローの Web リクエストと共有する認証用文字列
  *   WORKFLOW_LINK_TRIGGER_URL   Slack Workflow Builder のリンクトリガーURL（末尾に ? でクエリを付与して使う）
+ *
+ * 任意キー:
+ *   SOURCE_CALENDAR_ID     商談予定を走査する対象カレンダーのID（未設定ならスクリプト実行者のデフォルトカレンダー）
  */
 function getConfig_() {
   var props = PropertiesService.getScriptProperties().getProperties();
