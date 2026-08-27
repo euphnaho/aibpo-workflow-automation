@@ -314,17 +314,17 @@
   <span class="eyebrow">Process Design</span>
   <h1>商談結果報告フロー</h1>
   <p class="lede">Jicoo経由／記名ルールの2つの入口から初回商談を判定し、「案件化 / 検討中 / 失注」の振り分けとNA日の追いかけまでを自動化する設計。</p>
-  <p class="meta">最終更新 2026-08-17（v5） &nbsp;·&nbsp; 掲載データはすべてダミー</p>
+  <p class="meta">最終更新 2026-08-17（v6） &nbsp;·&nbsp; 掲載データはすべてダミー</p>
 
   <section>
     <div class="section-head">
       <span class="section-num">01</span>
       <h2>全体フロー</h2>
     </div>
-    <p class="lede-block">Jicoo経由と手動登録の2つの入口を、GASの一括判定で1本の「初回商談一覧」に合流させる。Slack通知のボタンを押すと各ワークフローがスプレッドシートへ直接書き込み、GASはそれを定期巡回して拾う（PULL型）。未案件化はNA日を起点にSlack通知へループバックする。</p>
+    <p class="lede-block">Jicoo経由と手動登録の2つの入口を、GASの一括判定で1本の「初回商談一覧」に合流させる。Slack通知のボタンを押すと各ワークフローがスプレッドシートへ直接書き込み、GASはそれを定期巡回して企業名（または日付）で突き合わせる（PULL型）。未案件化はNA日を起点にSlack通知へループバックする。</p>
 
     <figure>
-      <svg viewBox="0 0 1000 800" role="img" aria-label="商談獲得後、Jicoo経由ならJicooの予定をそのまま使い、Jicoo以外なら記名ルールで手動登録する。GASが1日1回、Jicoo対象リストまたは記名ルールで初回商談を判定して初回商談一覧へ反映し、商談終了を検知するとSlack通知を送る。通知には案件化した、進行中、失注したの3つのボタンがあり、それぞれ対応するSlackワークフローへ進んで案件リスト・追いかけ中商談リスト・失注リストへ直接書き込む。SlackからGASへの直接POSTが使えないため、GASは15分毎にこの3シートを巡回して初回商談一覧を更新する。進行中の場合はNA日を記録し、NA日を迎えると再びSlack通知に戻ってループする図">
+      <svg viewBox="0 0 1000 800" role="img" aria-label="商談獲得後、Jicoo経由ならJicooの予定をそのまま使い、Jicoo以外なら記名ルールで手動登録する。GASが1日1回、Jicoo対象リストまたは記名ルールで初回商談を判定して初回商談一覧へ反映し、商談終了を検知するとSlack通知を送る。通知には案件化した、進行中、失注したの3つのボタンがあり、それぞれ対応するSlackワークフローへ進んで案件リスト・追いかけ中商談リスト・失注リストへ直接書き込む。SlackからGASへの直接POSTもカスタム変数の受け渡しも使えないため、GASは15分毎にこの3シートを巡回し、企業名の一致（無ければ商談実施日が同じで候補1件のみの場合に仮マッチ）で初回商談一覧と突合シートを更新する。進行中の場合はNA日を記録し、NA日を迎えると再びSlack通知に戻ってループする図">
         <defs>
           <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
             <path d="M0,0 L10,5 L0,10 z" fill="currentColor" />
@@ -405,7 +405,7 @@
 
           <rect x="60" y="532" width="220" height="50" rx="8" fill="var(--surface)" stroke="currentColor"/>
           <text x="170" y="553" text-anchor="middle" font-size="12.5">案件リストへ直接書込み</text>
-          <text x="170" y="569" text-anchor="middle" font-size="11" fill="var(--ink-muted)">(元カレンダーIDを含む)</text>
+          <text x="170" y="569" text-anchor="middle" font-size="11" fill="var(--ink-muted)">(企業名は手入力/コピペ)</text>
 
           <rect x="470" y="532" width="220" height="50" rx="8" fill="var(--surface)" stroke="currentColor"/>
           <text x="580" y="553" text-anchor="middle" font-size="12.5">追いかけ中商談リストへ</text>
@@ -425,17 +425,17 @@
         <path d="M830,582 L830,610 L630,610 L630,634" fill="none" stroke="var(--ink-muted)" marker-end="url(#arrow)"/>
 
         <rect x="360" y="634" width="280" height="54" rx="8" fill="var(--surface)" stroke="currentColor"/>
-        <text x="500" y="657" text-anchor="middle" font-size="12.5" fill="var(--ink)">GAS巡回（15分毎）</text>
-        <text x="500" y="673" text-anchor="middle" font-size="11" fill="var(--ink-muted)">reconcileDealSheetWrites</text>
+        <text x="500" y="655" text-anchor="middle" font-size="12.5" fill="var(--ink)">GAS巡回（15分毎）</text>
+        <text x="500" y="670" text-anchor="middle" font-size="10.5" fill="var(--ink-muted)">企業名一致／日付一致(候補1件)で突合</text>
 
         <line x1="500" y1="688" x2="500" y2="712" stroke="var(--ink)" marker-end="url(#arrow)"/>
 
         <rect x="360" y="712" width="280" height="58" rx="8" fill="var(--surface)" stroke="var(--ink)"/>
-        <text x="500" y="735" text-anchor="middle" font-size="12.5" fill="var(--ink)">初回商談一覧を更新</text>
+        <text x="500" y="735" text-anchor="middle" font-size="12.5" fill="var(--ink)">初回商談一覧・突合を更新</text>
         <text x="500" y="752" text-anchor="middle" font-size="12.5" fill="var(--ink)">（案件化有無／企業名確定）</text>
       </svg>
 
-      <figcaption>点線＝人手による操作。実線＝GASによる自動処理。緑＝ボタン押下による3方向分岐、および進行中からNA日ループでSlack通知へ戻る経路。各ワークフローはスプレッドシートへ直接書き込み、GASはSlackへの直接POSTを受け取れないため、その書き込みを定期的に巡回して拾いに行くPULL型にしている。</figcaption>
+      <figcaption>点線＝人手による操作。実線＝GASによる自動処理。緑＝ボタン押下による3方向分岐、および進行中からNA日ループでSlack通知へ戻る経路。各ワークフローはスプレッドシートへ直接書き込み、GASはリンクトリガーにカスタム変数を渡せずSlackへの直接POSTも受け取れないため、その書き込みを定期的に巡回して企業名（または日付）で突き合わせるPULL型にしている。</figcaption>
     </figure>
   </section>
 
@@ -477,11 +477,10 @@
       </div>
 
       <div class="schema-card">
-        <span class="tag">案件管理シート・既存シートに列追加</span>
+        <span class="tag">案件管理シート・既存シート</span>
         <h3>案件リスト</h3>
         <div class="cols">
-          <span class="col-token">（既存の列はそのまま）</span>
-          <span class="col-token new">元カレンダーID(紐付け用)</span>
+          <span class="col-token">（変更不要。calendar_idが使えないため企業名で突き合わせる）</span>
         </div>
       </div>
 
@@ -507,7 +506,6 @@
         <span class="tag">案件管理シート・新規シート</span>
         <h3>追いかけ中商談リスト</h3>
         <div class="cols">
-          <span class="col-token new">元カレンダーID(紐付け用)</span>
           <span class="col-token new">クライアント名</span>
           <span class="col-token new">先方担当者</span>
           <span class="col-token new">営業担当</span>
@@ -532,7 +530,15 @@
           <span class="col-token new">失注区分(未案件化/案件化後失注)</span>
           <span class="col-token new">失注理由</span>
           <span class="col-token new">失注理由（詳細）</span>
-          <span class="col-token new">元カレンダーID(紐付け用)</span>
+        </div>
+      </div>
+
+      <div class="schema-card">
+        <span class="tag">KPI管理シート・既存シートに列追加</span>
+        <h3>突合</h3>
+        <div class="cols">
+          <span class="col-token">（既存の列はそのまま。数式含め触れない）</span>
+          <span class="col-token new">企業名(確定)</span>
         </div>
       </div>
 
@@ -544,31 +550,21 @@
       <span class="section-num">04</span>
       <h2>Slackワークフロー設定手順</h2>
     </div>
-    <p class="lede-block">Slack Workflow Builder 側は手動設定。このワークスペースのプランでは「Webリクエストを送信」ステップが使えないため、どのワークフローも同じ3ステップ型（フォームで収集 → スプレッドシートに追加する → メッセージを送信する）を使う。既存の案件化ワークフローがすでにこの型で動いている。</p>
+    <p class="lede-block">Slack Workflow Builder 側は手動設定。このワークスペースのプランでは「Webリクエストを送信」ステップも、リンクトリガーへのカスタム変数受け渡しも使えない。そのため企業名等の自動引き継ぎはできず、<strong>Slack通知本文に表示される企業名・担当者名・営業担当をコピペしてフォームに入力</strong>する運用にする。Jicoo経由で企業名が未取得の場合はフォームで正式名称を新規入力する。どのワークフローも同じ3ステップ型（フォームで収集 → スプレッドシートに追加する → メッセージを送信する）を使う。</p>
 
-    <h3 style="margin:0 0 12px;">4.1　既存の「案件化」ワークフローへの追加設定</h3>
-    <p class="lede-block">すでにこの3ステップ型で案件リストへ書き込んでいる。変更は2点だけでよい。</p>
-    <ol class="steps">
-      <li>
-        <div class="step-title">リンクトリガーに入力変数 <code>calendar_id</code> を追加</div>
-        <div class="step-body">GASが投稿する「案件化した」ボタンのURLに <code>calendar_id</code> <code>company_name</code> <code>contact_name</code> <code>sales_rep</code> がクエリパラメータで付いてくる。</div>
-      </li>
-      <li>
-        <div class="step-title">「2. スプレッドシートに追加する」で列マッピングを追加</div>
-        <div class="step-body">案件リストに新設した <code>元カレンダーID(紐付け用)</code> 列に <code>{{calendar_id}}</code> をマッピングする。GASはこの値をキーに商談DBと突き合わせる。</div>
-      </li>
-    </ol>
+    <h3 style="margin:0 0 12px;">4.1　既存の「案件化」ワークフロー</h3>
+    <p class="lede-block">すでにこの3ステップ型で案件リストへ書き込んでいる。<strong>変更は不要</strong>（calendar_id連携を前提にしていた設計は撤回した）。</p>
 
     <h3 style="margin:28px 0 12px;">4.2　新規ワークフロー（進行中／失注）</h3>
-    <p class="lede-block">既存ワークフローと同じ3ステップ型で、独立したワークフローを2つ作る（If/Thenでの分岐は不要。ボタンごとに別ワークフローなので迷わない）。</p>
+    <p class="lede-block">既存ワークフローと同じ3ステップ型で、独立したワークフローを2つ作る（If/Thenでの分岐は不要。ボタンごとに別ワークフローなので迷わない。カスタム変数は使わないシンプルなリンクトリガーでよい）。</p>
     <ol class="steps">
       <li>
         <div class="step-title">進行中（未失注）用ワークフローを作成</div>
-        <div class="step-body">リンクトリガーの入力変数: <code>calendar_id</code> <code>company_name</code> <code>contact_name</code> <code>sales_rep</code>。フォームで企業名・担当者名（編集可）・ネクストアクション・<strong>NA日（必須・再通知ループの起点）</strong>・案件化見込み度を収集し、「スプレッドシートに追加する」で追いかけ中商談リストへ（<code>元カレンダーID(紐付け用)</code>に<code>{{calendar_id}}</code>を含める）。最後に「メッセージを送信する」で完了報告（例: 「📝 {{企業名}} を追いかけ中商談リストに記録しました」）。</div>
+        <div class="step-body">フォームで企業名・担当者名（手入力）・ネクストアクション・<strong>NA日（必須・再通知ループの起点）</strong>・案件化見込み度を収集し、「スプレッドシートに追加する」で追いかけ中商談リストへ追加。最後に「メッセージを送信する」で完了報告（例: 「📝 {{クライアント名}} を追いかけ中商談リストに記録しました」）。</div>
       </li>
       <li>
         <div class="step-title">失注した用ワークフローを作成</div>
-        <div class="step-body">リンクトリガーの入力変数は同じ4つ。フォームで企業名・担当者名・失注区分・失注理由（マスター参照）・詳細メモを収集し、「スプレッドシートに追加する」で失注リストへ（同様に<code>元カレンダーID(紐付け用)</code>を含める）。最後に「メッセージを送信する」で完了報告（例: 「📕 {{企業名}} を失注リストに記録しました」）。</div>
+        <div class="step-body">フォームで企業名・担当者名・失注区分・失注理由（マスター参照）・詳細メモを収集し、「スプレッドシートに追加する」で失注リストへ追加。最後に「メッセージを送信する」で完了報告（例: 「📕 {{クライアント名}} を失注リストに記録しました」）。</div>
       </li>
     </ol>
   </section>
@@ -581,10 +577,10 @@
     <p class="lede-block">番号は次の「06 スケジュール」の日程表と共通。</p>
     <ul class="checklist">
       <li><span class="checklist-text"><span class="milestone-num">①</span>「Jicoo対象リスト」を作成する（大さん保有分を転記）</span></li>
-      <li><span class="checklist-text"><span class="milestone-num">②</span>初回商談一覧・案件リスト・追いかけ中商談リスト・失注リストのシート構成を更新する</span></li>
+      <li><span class="checklist-text"><span class="milestone-num">②</span>初回商談一覧・追いかけ中商談リスト・失注リスト・突合のシート構成を更新する（案件リスト等への列追加は不要）</span></li>
       <li><span class="checklist-text"><span class="milestone-num">③</span>CalendarFetch.gs を配置する（既存の syncCalendarToSheet の走査パターンをベースに改造）</span></li>
       <li><span class="checklist-text"><span class="milestone-num">④</span>Incoming Webhook URLを確認する（発行済み）</span></li>
-      <li><span class="checklist-text"><span class="milestone-num">⑤</span>Slack Workflow Builderを設定する：既存の案件化ワークフローへ2点の変更（calendar_id変数＋元カレンダーID列マッピング）を行い、新規「進行中」「失注」ワークフローを作成</span></li>
+      <li><span class="checklist-text"><span class="milestone-num">⑤</span>Slack Workflow Builderで新規「進行中」「失注」ワークフローを作成する（既存の案件化ワークフローは変更不要）</span></li>
       <li><span class="checklist-text"><span class="milestone-num">⑥</span>gas/ 配下のコードを配置し、4つの時間主導トリガーを設定する（Web Appデプロイは不要）</span></li>
       <li><span class="checklist-text"><span class="milestone-num">⑦</span>初回ループ・NA日再通知ループの両方をダミーデータでE2Eテストする</span></li>
       <li><span class="checklist-text"><span class="milestone-num">⑧</span>チームへ共有・運用開始を案内する</span></li>
@@ -603,10 +599,10 @@
       </thead>
       <tbody>
         <tr><td class="who">8/18(火)</td><td>①Jicoo対象リスト整備＋④Incoming Webhook URL確認</td><td class="note">1〜1.5h</td></tr>
-        <tr><td class="who">8/19(水)</td><td>②シート構成更新（列追加・新規3シート）</td><td class="note">1〜2h</td></tr>
+        <tr><td class="who">8/19(水)</td><td>②シート構成更新（突合に列追加・新規2シート）</td><td class="note">1〜2h</td></tr>
         <tr><td class="who">8/20-21(木金)</td><td>③CalendarFetch.gs配置（既存スクリプトを踏襲）</td><td class="note">2〜4h</td></tr>
         <tr><td class="who">8/22-23(土日)</td><td>予備（③が押した場合の吸収）</td><td class="note">—</td></tr>
-        <tr><td class="who">8/24(月)</td><td>⑤Slack Workflow Builder設定（NA日フィールド含む）</td><td class="note">2〜3h</td></tr>
+        <tr><td class="who">8/24(月)</td><td>⑤Slack Workflow Builder設定（新規2ワークフローのみ・NA日フィールド含む）</td><td class="note">1.5〜2.5h</td></tr>
         <tr><td class="who">8/25(火)</td><td>⑥GASコード配置・スクリプトプロパティ設定＋4トリガー設定</td><td class="note">1〜1.5h</td></tr>
         <tr><td class="who">8/26-27(水木)</td><td>⑦E2Eテスト（初回ループ／NA日再通知ループ）</td><td class="note">4〜6h</td></tr>
         <tr><td class="who">8/28(金)</td><td>不具合修正・再テスト</td><td class="note">2h</td></tr>
@@ -620,8 +616,9 @@
     <div class="callout">
       <h3>未確定・要相談</h3>
       <ul>
-        <li>Slackワークフロー→GASの直接POSTが使えないため、PULL型（GASが定期的にスプレッドシートを巡回）に変更した。反映の即時性はWebhook方式より落ちる（最大15分程度のラグ）。即時性が必要になった場合、有料プランへの変更や別の連携方法を検討する。</li>
-        <li>既存の案件化ワークフローの編集権限者との調整が必要。<code>calendar_id</code> 入力変数の追加と、「スプレッドシートに追加する」ステップでの <code>元カレンダーID(紐付け用)</code> 列マッピング追加を依頼する。</li>
+        <li>Slackワークフロー→GASの直接POSTも、リンクトリガーへのカスタム変数の受け渡しも使えないため、PULL型（GASが定期的にスプレッドシートを巡回）に変更し、突き合わせも企業名の完全一致（曖昧なら商談実施日＋候補1件のみの仮マッチ）に変更した。反映の即時性はWebhook方式より落ちる（最大15分程度のラグ）。</li>
+        <li>同一企業名で複数の未回答商談が並行すると自動マッチに失敗する（誤マッチ防止のため意図的にスキップする設計）。その場合は初回商談一覧を手動編集してカバーする。</li>
+        <li>Jicoo経由で企業名が未取得の商談は、日付マッチが唯一の手がかりになる。同じ日に複数のJicoo経由・未回答商談が重なるとマッチできない。発生頻度次第で営業担当名も含めた突き合わせへの拡張を検討する。</li>
         <li>失注理由の選択肢（マスターシート記載分）をSlackワークフロー側へ転記する作業は手動。</li>
         <li>追いかけ中商談リストの行は物理削除せず残す設計のため、長期運用で行数が増え続ける。四半期単位のアーカイブ運用を別途検討する。</li>
       </ul>

@@ -48,7 +48,6 @@ function notifyCompletedFirstMeetings() {
     if (now < endTime) return; // まだ商談中/未実施
 
     var meeting = {
-      calendarId: calendarId,
       companyName: get('企業名取得'),
       contactName: get('企業担当者名取得'),
       salesRep: get('参加者①'),
@@ -101,7 +100,6 @@ function renotifyDueFollowUps() {
     }
 
     var meeting = {
-      calendarId: get('元カレンダーID(紐付け用)'),
       companyName: get('クライアント名'),
       contactName: get('先方担当者'),
       salesRep: get('営業担当'),
@@ -132,18 +130,19 @@ function getMeetingEndTime_(meetingStart) {
  *   案件化した       → 既存の「案件化」Slackワークフロー（案件リストへの書き込みは既存WF側が担当）
  *   進行中（未失注） → 新規ワークフロー（NA日を回収し追いかけ中商談リストへ）
  *   失注した         → 新規ワークフロー（失注理由を回収し失注リストへ）
- * 各ボタンのURLには calendar_id / company_name / contact_name / sales_rep を
- * クエリパラメータとして付与する（どのワークフローに渡すかはURL自体で決まるため、
- * ワークフロー側で「案件化ステータス」を改めて質問する必要はない）。
  *
- * 転記完了の報告はGASからは行わない。各Slackワークフロー側の最終ステップに
- * 「メッセージを送信」を追加してもらい、そちらで完了を知らせる（§6参照）。
+ * リンクトリガーにカスタム変数を渡せない（Slackワークフロー側の制約）ため、
+ * ボタンは各ワークフローへの単純なリンクにし、企業名・担当者名等はメッセージ本文に
+ * 記載する。営業担当はそれをコピペしてフォームに入力する（既存の案件化ワークフローも
+ * もともと手入力の運用のため、これで従来と同じ使用感になる）。
+ * Jicoo経由で企業名が未取得の場合は、フォームで正式名称を入力してもらう
+ * （ReconcileDealSheets.gs が入力された名称を商談DB・突合シートへ反映する）。
  */
 function postSlackNotification_(config, meeting, kind) {
-  var dealUrl = buildWorkflowLinkUrl_(config.EXISTING_DEAL_WORKFLOW_URL, meeting);
-  var inProgressUrl = buildWorkflowLinkUrl_(config.WORKFLOW_LINK_TRIGGER_URL_INPROGRESS, meeting);
-  var lostUrl = buildWorkflowLinkUrl_(config.WORKFLOW_LINK_TRIGGER_URL_LOST, meeting);
   var headline = kind === 'followup' ? '*ネクストアクション日になりました*' : '*商談が終了しました*';
+  var companyLine = meeting.companyName
+    ? '\n企業名: ' + meeting.companyName
+    : '\n企業名: (未取得・Jicoo経由のためフォームで正式名称を入力してください)';
 
   var blocks = [
     {
@@ -151,7 +150,7 @@ function postSlackNotification_(config, meeting, kind) {
       text: {
         type: 'mrkdwn',
         text: headline +
-          '\n企業名: ' + (meeting.companyName || '(未取得)') +
+          companyLine +
           '\n先方担当者: ' + (meeting.contactName || '(未取得)') +
           '\n営業担当: ' + (meeting.salesRep || '(未取得)') +
           '\n商談日時: ' + Utilities.formatDate(new Date(meeting.meetingTime), 'JST', 'yyyy-MM-dd HH:mm')
@@ -163,18 +162,18 @@ function postSlackNotification_(config, meeting, kind) {
         {
           type: 'button',
           text: { type: 'plain_text', text: '案件化した' },
-          url: dealUrl,
+          url: config.EXISTING_DEAL_WORKFLOW_URL,
           style: 'primary'
         },
         {
           type: 'button',
           text: { type: 'plain_text', text: '進行中（未失注）' },
-          url: inProgressUrl
+          url: config.WORKFLOW_LINK_TRIGGER_URL_INPROGRESS
         },
         {
           type: 'button',
           text: { type: 'plain_text', text: '失注した' },
-          url: lostUrl
+          url: config.WORKFLOW_LINK_TRIGGER_URL_LOST
         }
       ]
     }
@@ -182,7 +181,7 @@ function postSlackNotification_(config, meeting, kind) {
 
   postToIncomingWebhook_(config, {
     blocks: blocks,
-    text: headline + ': ' + (meeting.companyName || '')
+    text: headline + ': ' + (meeting.companyName || '(未取得)')
   });
 }
 
@@ -201,17 +200,4 @@ function postToIncomingWebhook_(config, message) {
   if (response.getResponseCode() !== 200 || response.getContentText() !== 'ok') {
     throw new Error('Slack通知に失敗しました: ' + response.getResponseCode() + ' ' + response.getContentText());
   }
-}
-
-function buildWorkflowLinkUrl_(baseUrl, meeting) {
-  var params = {
-    calendar_id: meeting.calendarId || '',
-    company_name: meeting.companyName || '',
-    contact_name: meeting.contactName || '',
-    sales_rep: meeting.salesRep || ''
-  };
-  var query = Object.keys(params)
-    .map(function (k) { return k + '=' + encodeURIComponent(params[k]); })
-    .join('&');
-  return baseUrl + (baseUrl.indexOf('?') >= 0 ? '&' : '?') + query;
 }
