@@ -55,11 +55,10 @@ function notifyCompletedFirstMeetings() {
       meetingTime: meetingTime
     };
 
-    var ts = postSlackNotification_(config, meeting, 'initial');
+    postSlackNotification_(config, meeting, 'initial');
 
     updateRowByHeaderNames_(sheet, rowNumber, {
-      '通知済みフラグ': true,
-      'Slackメッセージts': ts
+      '通知済みフラグ': true
     });
   });
 }
@@ -109,11 +108,10 @@ function renotifyDueFollowUps() {
       meetingTime: get('初回商談日')
     };
 
-    var ts = postSlackNotification_(config, meeting, 'followup');
+    postSlackNotification_(config, meeting, 'followup');
 
     updateRowByHeaderNames_(sheet, rowNumber, {
-      '直近通知日': new Date(),
-      '再通知Slackメッセージts': ts
+      '直近通知日': new Date()
     });
   });
 }
@@ -129,12 +127,22 @@ function getMeetingEndTime_(meetingStart) {
 }
 
 /**
- * Slackへ通知メッセージを投稿し、スレッド返信用の ts を返す。
- * リンクボタンには Slack Workflow のリンクトリガーURLに
- * calendar_id / company_name / contact_name / sales_rep をクエリパラメータとして付与する。
+ * Slackへ通知メッセージを Incoming Webhook で投稿する。
+ * ボタンは3つ:
+ *   案件化した       → 既存の「案件化」Slackワークフロー（案件リストへの書き込みは既存WF側が担当）
+ *   進行中（未失注） → 新規ワークフロー（NA日を回収し追いかけ中商談リストへ）
+ *   失注した         → 新規ワークフロー（失注理由を回収し失注リストへ）
+ * 各ボタンのURLには calendar_id / company_name / contact_name / sales_rep を
+ * クエリパラメータとして付与する（どのワークフローに渡すかはURL自体で決まるため、
+ * ワークフロー側で「案件化ステータス」を改めて質問する必要はない）。
+ *
+ * 転記完了の報告はGASからは行わない。各Slackワークフロー側の最終ステップに
+ * 「メッセージを送信」を追加してもらい、そちらで完了を知らせる（§6参照）。
  */
 function postSlackNotification_(config, meeting, kind) {
-  var workflowUrl = buildWorkflowLinkUrl_(config.WORKFLOW_LINK_TRIGGER_URL, meeting);
+  var dealUrl = buildWorkflowLinkUrl_(config.EXISTING_DEAL_WORKFLOW_URL, meeting);
+  var inProgressUrl = buildWorkflowLinkUrl_(config.WORKFLOW_LINK_TRIGGER_URL_INPROGRESS, meeting);
+  var lostUrl = buildWorkflowLinkUrl_(config.WORKFLOW_LINK_TRIGGER_URL_LOST, meeting);
   var headline = kind === 'followup' ? '*ネクストアクション日になりました*' : '*商談が終了しました*';
 
   var blocks = [
@@ -154,31 +162,45 @@ function postSlackNotification_(config, meeting, kind) {
       elements: [
         {
           type: 'button',
-          text: { type: 'plain_text', text: '案件化可否を報告する' },
-          url: workflowUrl,
+          text: { type: 'plain_text', text: '案件化した' },
+          url: dealUrl,
           style: 'primary'
+        },
+        {
+          type: 'button',
+          text: { type: 'plain_text', text: '進行中（未失注）' },
+          url: inProgressUrl
+        },
+        {
+          type: 'button',
+          text: { type: 'plain_text', text: '失注した' },
+          url: lostUrl
         }
       ]
     }
   ];
 
-  var response = UrlFetchApp.fetch('https://slack.com/api/chat.postMessage', {
+  postToIncomingWebhook_(config, {
+    blocks: blocks,
+    text: headline + ': ' + (meeting.companyName || '')
+  });
+}
+
+/**
+ * Incoming Webhookへメッセージを投稿する共通関数。
+ * 成功時のレスポンスボディはプレーンテキストの "ok"（JSONでもtsでもない）。
+ */
+function postToIncomingWebhook_(config, message) {
+  var response = UrlFetchApp.fetch(config.SLACK_INCOMING_WEBHOOK_URL, {
     method: 'post',
     contentType: 'application/json; charset=utf-8',
-    headers: { Authorization: 'Bearer ' + config.SLACK_BOT_TOKEN },
-    payload: JSON.stringify({
-      channel: config.SLACK_CHANNEL_ID,
-      blocks: blocks,
-      text: headline + ': ' + (meeting.companyName || '')
-    }),
+    payload: JSON.stringify(message),
     muteHttpExceptions: true
   });
 
-  var json = JSON.parse(response.getContentText());
-  if (!json.ok) {
-    throw new Error('Slack通知に失敗しました: ' + json.error);
+  if (response.getResponseCode() !== 200 || response.getContentText() !== 'ok') {
+    throw new Error('Slack通知に失敗しました: ' + response.getResponseCode() + ' ' + response.getContentText());
   }
-  return json.ts;
 }
 
 function buildWorkflowLinkUrl_(baseUrl, meeting) {

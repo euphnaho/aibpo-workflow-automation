@@ -2,6 +2,10 @@
  * Slack Workflow Builder の「Webリクエストを送信」ステップから呼ばれる Web App エントリポイント。
  * 想定オペレーション ステップ4〜6（案件化可否の回収〜各シートへの反映）に対応する。
  *
+ * 「案件化した」は既存の案件化Slackワークフロー（案件リストへの書き込みは既存WF側が担当）から
+ * 呼ばれる。GAS側は商談DB（初回商談一覧）の更新のみ行い、案件リストへは書き込まない。
+ * 「進行中（未失注）」「失注した」は新規ワークフローから呼ばれ、対応するシートへ反映する。
+ *
  * 期待するリクエストボディ(JSON)の例:
  * {
  *   "secret": "共有シークレット",
@@ -9,9 +13,6 @@
  *   "company_name": "...",   // Slackフォームに事前入力されるが、営業担当が編集可能。送信された値を正とする
  *   "contact_name": "...", "sales_rep": "...", "meeting_time": "...",
  *   "status": "案件化した" | "進行中（未失注）" | "失注した",
- *
- *   // status === "案件化した" の場合に使用
- *   "deal_name": "...", "expected_amount": "...", "target_area": "...", "next_meeting_date": "...",
  *
  *   // status === "進行中（未失注）" の場合に使用（NA日は再通知ループの起点として必須）
  *   "next_action": "...", "na_date": "...", "probability": "...",
@@ -24,7 +25,6 @@
  *   実行するユーザー: 自分 / アクセスできるユーザー: 全員（Slackからの匿名POSTを受けるため）
  */
 
-var DEAL_LIST_SHEET_NAME = '案件リスト';
 var FOLLOW_UP_SHEET_NAME = '追いかけ中商談リスト';
 var LOST_LIST_SHEET_NAME = '失注リスト';
 
@@ -42,18 +42,8 @@ function doPost(e) {
     var resultLabel;
 
     if (payload.status === '案件化した') {
-      appendRowByHeaderNames_(dealSs.getSheetByName(DEAL_LIST_SHEET_NAME), {
-        '案件登録日': today,
-        'クライアント名': payload.company_name,
-        '先方担当者': payload.contact_name,
-        '案件名': payload.deal_name,
-        '初回商談日': payload.meeting_time || today,
-        '営業担当': payload.sales_rep,
-        '金額（税抜）': payload.expected_amount,
-        '対象業務領域': payload.target_area,
-        '次回商談日': payload.next_meeting_date,
-        'ステータス': '11.商談前'
-      });
+      // 案件リストへの書き込みは既存の案件化Slackワークフロー側が担当済み。
+      // ここでは追いかけ中商談リストのクローズと商談DBの更新だけ行う。
       closeFollowUpIfExists_(dealSs, payload.calendar_id, '案件化済み(卒業)');
       resultLabel = '案件化';
 
@@ -96,8 +86,8 @@ function doPost(e) {
 
     // 商談DB（初回商談一覧）と案件管理シート側の企業名・担当者名を、
     // 営業担当がSlackフォームで確定させた値に統一する。
+    // 完了報告はSlackワークフロー側の最終ステップ「メッセージを送信」で行うため、GASからは行わない。
     updateFirstMeetingRow_(payload.calendar_id, resultLabel, payload.company_name, payload.contact_name);
-    notifySlackThread_(config, payload, resultLabel);
 
     return jsonResponse_({ ok: true, result: resultLabel });
   } catch (err) {
@@ -130,29 +120,6 @@ function updateFirstMeetingRow_(calendarId, resultLabel, confirmedCompanyName, c
     '回答日時': new Date(),
     '企業名(確定)': confirmedCompanyName,
     '担当者名(確定)': confirmedContactName
-  });
-}
-
-function notifySlackThread_(config, payload, resultLabel) {
-  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(FIRST_MEETING_SHEET_NAME);
-  var rowNumber = findRowByColumnValue_(sheet, 'カレンダーID(紐付け用)', payload.calendar_id);
-  if (rowNumber === -1) return;
-
-  var headerIndex = buildHeaderIndex_(sheet);
-  var tsCol = headerIndex['Slackメッセージts'];
-  var ts = tsCol ? sheet.getRange(rowNumber, tsCol).getValue() : '';
-  if (!ts) return;
-
-  UrlFetchApp.fetch('https://slack.com/api/chat.postMessage', {
-    method: 'post',
-    contentType: 'application/json; charset=utf-8',
-    headers: { Authorization: 'Bearer ' + config.SLACK_BOT_TOKEN },
-    payload: JSON.stringify({
-      channel: config.SLACK_CHANNEL_ID,
-      thread_ts: ts,
-      text: '転記しました: ' + (payload.company_name || '') + ' → ' + resultLabel
-    }),
-    muteHttpExceptions: true
   });
 }
 
