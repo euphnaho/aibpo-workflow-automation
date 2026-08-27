@@ -5,7 +5,9 @@
  * 必須キー:
  *   SLACK_INCOMING_WEBHOOK_URL     通知先チャンネルに紐づく Incoming Webhook のURL
  *                                  （チャンネルはWebhook作成時に固定されるため、別途チャンネルID指定は不要）
- *   DEAL_SHEET_ID          案件管理シート（案件リスト/追いかけ中商談リスト/失注リストが入っている方）のID
+ *   DEAL_SHEET_ID          案件管理シート（案件リストが入っている方）のID。
+ *                          追いかけ中商談リスト・失注リストはKPI管理シート（このプロジェクトが
+ *                          紐づくスプレッドシート）側に作成されたため、ここには含まれない。
  *   EXISTING_DEAL_WORKFLOW_URL     既存の「案件化した」用Slackワークフローのリンクトリガーurl
  *   WORKFLOW_LINK_TRIGGER_URL_INPROGRESS   新規「進行中（未失注）」用ワークフローのリンクトリガーURL
  *   WORKFLOW_LINK_TRIGGER_URL_LOST         新規「失注した」用ワークフローのリンクトリガーURL

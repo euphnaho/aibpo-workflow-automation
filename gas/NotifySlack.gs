@@ -65,11 +65,13 @@ function notifyCompletedFirstMeetings() {
 /**
  * 「追いかけ中商談リスト」でNA日を迎えた行に対し、再度「案件化可否」を聞く通知を送る。
  * 想定オペレーション ステップ6（NA日に再度案件化可否を回収 → ステップ4へ戻る）に対応。
+ *
+ * 追いかけ中商談リストはKPI管理シート（このスクリプトが紐づくスプレッドシート）側に
+ * 作成されたため、DEAL_SHEET_ID（案件管理シート）ではなくアクティブなスプレッドシートを見る。
  */
 function renotifyDueFollowUps() {
   var config = getConfig_();
-  var dealSs = SpreadsheetApp.openById(config.DEAL_SHEET_ID);
-  var sheet = dealSs.getSheetByName(FOLLOW_UP_SHEET_NAME);
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(FOLLOW_UP_SHEET_NAME);
   if (!sheet) throw new Error('シートが見つかりません: ' + FOLLOW_UP_SHEET_NAME);
 
   var headerIndex = buildHeaderIndex_(sheet);

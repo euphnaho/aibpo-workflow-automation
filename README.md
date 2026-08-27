@@ -11,7 +11,7 @@ Slack Workflow Builder + Google Apps Script で自動化するための設計・
 番号は [docs/workflow-design.md](docs/workflow-design.md) §8 のマイルストーン・スケジュール表と対応。
 
 - [x] ①`Jicoo対象リスト` を作成する（大さん保有分を転記）
-- [x] ②初回商談一覧・追いかけ中商談リスト・失注リスト・突合のシート構成を更新する（列は docs/workflow-design.md §5 参照。`案件リスト`・`追いかけ中商談リスト`・`失注リスト`への列追加は不要になった）
+- [x] ②初回商談一覧・追いかけ中商談リスト・失注リスト・突合のシート構成を更新する（列は docs/workflow-design.md §5 参照。`案件リスト`への列追加は不要。`追いかけ中商談リスト`・`失注リスト`はKPI管理シート側に作成）
 - [x] ③`CalendarFetch.gs` を配置する（既存の `syncCalendarToSheet` の走査パターンをベースに、Jicoo対象リスト／記名ルールで初回判定するよう改造。既存スクリプトの `カレンダー情報_raw` 転記は変更なし）
 - [x] ④Incoming Webhook URLを確認する（発行済み）
 - [ ] ⑤Slack Workflow Builder を設定する：新規に「進行中」「失注」の2ワークフローを作成（既存の「案件化」ワークフローは変更不要になった。NA日フィールド必須。企業名等はSlack通知本文からコピペで手入力。docs/workflow-design.md §6 の手順）

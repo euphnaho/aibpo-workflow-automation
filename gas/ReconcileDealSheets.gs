@@ -2,6 +2,10 @@
  * 各Slackワークフローが「スプレッドシートに追加する」ステップで直接書き込んだ
  * 案件リスト / 追いかけ中商談リスト / 失注リスト を巡回し、初回商談一覧（商談DB）を更新する。
  *
+ * 案件リストは案件管理シート（別ファイル。DEAL_SHEET_IDで開く）、
+ * 追いかけ中商談リスト・失注リストはKPI管理シート（このスクリプトが紐づくスプレッドシート、
+ * 初回商談一覧・Jicoo対象リスト・突合と同じファイル）に作成された。
+ *
  * リンクトリガーにカスタム変数を渡せない（Slackワークフロー側の制約）ため、
  * calendar_idを使った突き合わせができない。代わりに以下の優先順で突き合わせる。
  *   1. 企業名（クライアント名 と 初回商談一覧の企業名(確定)/企業名取得 の完全一致）
@@ -30,9 +34,12 @@ var MATCHING_SHEET_NAME = '突合';
 
 function reconcileDealSheetWrites() {
   var config = getConfig_();
-  var firstMeetingSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(FIRST_MEETING_SHEET_NAME);
+  var activeSs = SpreadsheetApp.getActiveSpreadsheet();
+  var firstMeetingSheet = activeSs.getSheetByName(FIRST_MEETING_SHEET_NAME);
   if (!firstMeetingSheet) throw new Error('シートが見つかりません: ' + FIRST_MEETING_SHEET_NAME);
 
+  // 案件リストのみ案件管理シート（別ファイル）側。追いかけ中商談リスト・失注リストは
+  // KPI管理シート（このスクリプトが紐づくスプレッドシート）側に作成された。
   var dealSs = SpreadsheetApp.openById(config.DEAL_SHEET_ID);
   var headerIndex = buildHeaderIndex_(firstMeetingSheet);
   var lastRow = firstMeetingSheet.getLastRow();
@@ -66,8 +73,8 @@ function reconcileDealSheetWrites() {
 
   var candidates = {
     '案件化': readDealSheetRows_(dealSs, DEAL_LIST_SHEET_NAME),
-    '検討中': readDealSheetRows_(dealSs, FOLLOW_UP_SHEET_NAME),
-    '失注': readDealSheetRows_(dealSs, LOST_LIST_SHEET_NAME)
+    '検討中': readDealSheetRows_(activeSs, FOLLOW_UP_SHEET_NAME),
+    '失注': readDealSheetRows_(activeSs, LOST_LIST_SHEET_NAME)
   };
 
   pending.forEach(function (p) {
@@ -82,10 +89,10 @@ function reconcileDealSheetWrites() {
       '担当者名(確定)': match.contactName
     });
 
-    updateMatchingSheetCompanyName_(SpreadsheetApp.getActiveSpreadsheet(), p.calendarId, match.companyName);
+    updateMatchingSheetCompanyName_(activeSs, p.calendarId, match.companyName);
 
     if (match.resultLabel === '案件化' || match.resultLabel === '失注') {
-      closeFollowUpByCompanyName_(dealSs, match.companyName, match.resultLabel === '案件化' ? '案件化済み(卒業)' : '失注(クローズ)');
+      closeFollowUpByCompanyName_(activeSs, match.companyName, match.resultLabel === '案件化' ? '案件化済み(卒業)' : '失注(クローズ)');
     }
   });
 }
@@ -177,8 +184,8 @@ function updateMatchingSheetCompanyName_(ss, calendarId, companyName) {
  * 案件化・失注により追いかけループが終わった場合、追いかけ中商談リストの行を
  * 削除はせず、ステータスを更新してNA日を消すことで再通知の対象から外す。
  */
-function closeFollowUpByCompanyName_(dealSs, companyName, closedStatusLabel) {
-  var sheet = dealSs.getSheetByName(FOLLOW_UP_SHEET_NAME);
+function closeFollowUpByCompanyName_(ss, companyName, closedStatusLabel) {
+  var sheet = ss.getSheetByName(FOLLOW_UP_SHEET_NAME);
   var rowNumber = findRowByColumnValue_(sheet, 'クライアント名', companyName);
   if (rowNumber === -1) return;
 
